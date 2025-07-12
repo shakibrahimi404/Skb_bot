@@ -1,0 +1,50 @@
+import json
+import os
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, MessageHandler, filters
+
+USERS_FILE = "users.json"
+
+# بارگذاری داده‌های کاربران
+def load_users():
+    if not os.path.exists(USERS_FILE):
+        with open(USERS_FILE, "w") as f:
+            json.dump({}, f)
+    with open(USERS_FILE, "r") as f:
+        return json.load(f)
+
+# ذخیره داده‌ها
+def save_users(data):
+    with open(USERS_FILE, "w") as f:
+        json.dump(data, f)
+
+TOKEN = "توکن_ربات_تو_اینجا_بزار"  # اینو با توکن خودت جایگزین کن
+
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user = update.effective_user
+    users = load_users()
+    if str(user.id) not in users:
+        users[str(user.id)] = {"coins": 0}
+        save_users(users)
+    keyboard = InlineKeyboardMarkup([
+        [InlineKeyboardButton("💰 ماین سکه", web_app={"url": "https://yourproject.up.railway.app"})]
+    ])
+    await update.message.reply_text(f"سلام {user.first_name}! به NatCoin خوش آمدی.", reply_markup=keyboard)
+
+async def handle_data(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    data = update.message.text
+    users = load_users()
+    user_id = str(update.effective_user.id)
+
+    if data.startswith("ADD_COINS_"):
+        amount = int(data.split("_")[-1])
+        users[user_id]["coins"] += amount
+        save_users(users)
+        await update.message.reply_text(f"🌟 {amount} سکه به حساب شما افزوده شد! مجموع: {users[user_id]['coins']}")
+
+if __name__ == "__main__":
+    app = ApplicationBuilder().token(TOKEN).build()
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), handle_data))
+    print("ربات در حال اجراست...")
+    app.run_polling()
