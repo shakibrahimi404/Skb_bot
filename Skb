@@ -1,0 +1,33 @@
+from telegram import Update
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+
+# توکن ربات (توکن شما)
+TOKEN = "8077736169:AAHlt6vawNl5-jHy9m3UBDunqO7p5avfvu4"
+
+# آیدی عددی ادمین شما
+ADMIN_ID = 6636522193
+
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user = update.effective_user
+    await update.message.reply_text(
+        f"سلام {user.first_name}! ربات SKB فعال شد. خوش آمدید!"
+    )
+
+async def admin_only(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user = update.effective_user
+    if user.id != ADMIN_ID:
+        await update.message.reply_text("شما دسترسی ادمین ندارید.")
+        return
+    await update.message.reply_text("سلام ادمین! این دستور مخصوص شماست.")
+
+def main():
+    app = ApplicationBuilder().token(TOKEN).build()
+
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(CommandHandler("admin", admin_only))
+
+    print("ربات SKB در حال اجرا است ...")
+    app.run_polling()
+
+if __name__ == "__main__":
+    main()
